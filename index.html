@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>上周足球战报</title>
+    <meta name="description" content="上周足球赛比分、积分榜、球队进球和赛果明细。" />
+    <style>
+      :root {
+        --bg: #050505;
+        --surface: #090909;
+        --border: #252525;
+        --text: #f7f7f7;
+        --muted: #a1a1aa;
+        --quiet: #6f6f76;
+        --accent: #22c55e;
+      }
+      * { box-sizing: border-box; }
+      html { background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      body {
+        min-height: 100dvh;
+        margin: 0;
+        background: radial-gradient(circle at 50% -20%, rgb(255 255 255 / 0.08), transparent 34rem), linear-gradient(180deg, #070707 0%, var(--bg) 28rem);
+      }
+      button { font: inherit; cursor: pointer; }
+      .shell { width: min(100% - 32px, 1180px); margin: 0 auto; }
+      .topbar { position: sticky; top: 0; z-index: 2; border-bottom: 1px solid rgb(255 255 255 / 0.06); background: rgb(5 5 5 / 0.92); backdrop-filter: blur(12px); }
+      nav { height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .logo { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; border: 1px solid rgb(255 255 255 / 0.2); background: #fff; color: #000; font-weight: 700; }
+      .brand span { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 0.22em; }
+      .tabs { display: flex; gap: 4px; max-width: calc(100vw - 112px); overflow-x: auto; border: 1px solid rgb(255 255 255 / 0.1); border-radius: 999px; padding: 4px; background: rgb(255 255 255 / 0.025); }
+      .tab { flex: none; border: 0; border-radius: 999px; padding: 8px 16px; color: #71717a; background: transparent; font-size: 13px; font-weight: 600; transition: 0.2s; }
+      .tab:hover { color: #f4f4f5; background: rgb(255 255 255 / 0.06); }
+      .tab.active { background: #fff; color: #000; }
+      header { padding: 56px 0 40px; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+      .eyebrow { margin: 0 0 20px; color: #71717a; font-size: 12px; font-weight: 700; letter-spacing: 0.24em; }
+      h1 { margin: 0; font-size: clamp(48px, 9vw, 92px); line-height: 0.98; letter-spacing: -0.04em; }
+      .updated { color: #71717a; font-size: 14px; font-weight: 600; white-space: nowrap; }
+      .card { overflow: hidden; border: 1px solid var(--border); border-radius: 24px; background: linear-gradient(180deg, rgb(255 255 255 / 0.025), transparent 42%), var(--surface); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04); }
+      .card-head { border-bottom: 1px solid rgb(255 255 255 / 0.08); padding: 32px 40px; }
+      h2 { margin: 0; font-size: clamp(32px, 4vw, 48px); letter-spacing: -0.03em; }
+      .table-wrap { overflow-x: auto; }
+      table { width: 100%; min-width: 820px; border-collapse: collapse; }
+      th, td { padding: 20px 24px; text-align: left; white-space: nowrap; }
+      th { border-bottom: 1px solid rgb(255 255 255 / 0.08); color: #52525b; font-size: 11px; font-weight: 800; letter-spacing: 0.18em; }
+      td { border-bottom: 1px solid rgb(255 255 255 / 0.055); color: #71717a; font-size: 14px; }
+      tr:last-child td { border-bottom: 0; }
+      tbody tr:hover { background: rgb(255 255 255 / 0.035); }
+      .strong { color: #f4f4f5; font-weight: 700; }
+      .mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+      .rank { display: inline-flex; min-width: 28px; justify-content: center; border: 1px solid rgb(255 255 255 / 0.1); border-radius: 999px; padding: 4px 8px; }
+      .avatar { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid rgb(255 255 255 / 0.15); border-radius: 999px; background: rgb(255 255 255 / 0.05); color: #e4e4e7; font-size: 12px; font-weight: 800; }
+      main { padding-bottom: 96px; }
+      @media (max-width: 720px) {
+        .brand span { display: none; }
+        header { align-items: start; flex-direction: column; padding-top: 36px; }
+        .card-head { padding: 24px; }
+        th, td { padding: 18px 20px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <nav class="shell">
+        <div class="brand"><div class="logo">足</div><span>联赛数据</span></div>
+        <div class="tabs" id="tabs"></div>
+      </nav>
+    </div>
+    <header class="shell">
+      <div><p class="eyebrow">上周战报</p><h1>4 队积分榜</h1></div>
+      <div class="updated">更新于 2026/07/07</div>
+    </header>
+    <main class="shell">
+      <section class="card">
+        <div class="card-head"><h2 id="title">积分榜</h2></div>
+        <div class="table-wrap" id="table"></div>
+      </section>
+    </main>
+    <script>
+      const views = {
+        standings: { label: "积分榜", title: "积分榜", columns: ["排名", "球队", "场次", "胜", "平", "负", "进球", "失球", "净胜球", "积分"], strong: [0, 1, 9], rows: [["1", "谢磊组", "3", "2", "0", "1", "6", "2", "+4", "6"], ["2", "王鹏组", "3", "2", "0", "1", "6", "5", "+1", "6"], ["3", "三哥", "3", "1", "0", "2", "3", "4", "-1", "3"], ["4", "姜鹏组", "3", "1", "0", "2", "1", "5", "-4", "3"]] },
+        fixtures: { label: "比分", title: "比分", columns: ["时间", "主队", "比分", "客队", "结果"], strong: [1, 2, 3, 4], rows: [["上周", "王鹏组", "2:1", "三哥", "王鹏组胜"], ["上周", "姜鹏组", "1:0", "谢磊组", "姜鹏组胜"], ["上周", "王鹏组", "1:4", "谢磊组", "谢磊组胜"], ["上周", "姜鹏组", "0:2", "三哥", "三哥胜"], ["上周", "王鹏组", "3:0", "姜鹏组", "王鹏组胜"], ["上周", "谢磊组", "2:0", "三哥", "谢磊组胜"]] },
+        scorers: { label: "进球榜", title: "射手榜", columns: ["排名", "标识", "球队", "进球", "场均进球", "胜场", "净胜球"], strong: [0, 2, 3], avatar: 1, rows: [["1", "谢", "谢磊组", "6", "2.00", "2", "+4"], ["2", "王", "王鹏组", "6", "2.00", "2", "+1"], ["3", "三", "三哥", "3", "1.00", "1", "-1"], ["4", "姜", "姜鹏组", "1", "0.33", "1", "-4"]] },
+        assists: { label: "胜场榜", title: "胜场榜", columns: ["排名", "球队", "胜", "负", "平", "积分"], strong: [0, 1, 2, 5], rows: [["1", "谢磊组", "2", "1", "0", "6"], ["2", "王鹏组", "2", "1", "0", "6"], ["3", "三哥", "1", "2", "0", "3"], ["4", "姜鹏组", "1", "2", "0", "3"]] },
+        teams: { label: "球队", title: "球队", columns: ["球队", "场次", "积分", "净胜球", "积分效率"], strong: [0, 2, 4], rows: [["谢磊组", "3", "6", "+4", "66.7%"], ["王鹏组", "3", "6", "+1", "66.7%"], ["三哥", "3", "3", "-1", "33.3%"], ["姜鹏组", "3", "3", "-4", "33.3%"]] },
+        players: { label: "赛果明细", title: "赛果明细", columns: ["主队", "客队", "比分", "胜方", "积分"], strong: [0, 1, 2, 3, 4], rows: [["王鹏组", "三哥", "2:1", "王鹏组", "+3"], ["姜鹏组", "谢磊组", "1:0", "姜鹏组", "+3"], ["王鹏组", "谢磊组", "1:4", "谢磊组", "+3"], ["姜鹏组", "三哥", "0:2", "三哥", "+3"], ["王鹏组", "姜鹏组", "3:0", "王鹏组", "+3"], ["谢磊组", "三哥", "2:0", "谢磊组", "+3"]] },
+      };
+      let active = "standings";
+      const tabOrder = ["standings", "fixtures", "scorers", "assists", "teams", "players"];
+      const tabs = document.getElementById("tabs");
+      const table = document.getElementById("table");
+      const title = document.getElementById("title");
+      function renderTabs() {
+        tabs.innerHTML = tabOrder.map((key) => `<button class="tab ${key === active ? "active" : ""}" data-key="${key}">${views[key].label}</button>`).join("");
+        tabs.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => { active = button.dataset.key; render(); }));
+      }
+      function render() {
+        const view = views[active];
+        title.textContent = view.title;
+        table.innerHTML = `<table><thead><tr>${view.columns.map((c) => `<th>${c}</th>`).join("")}</tr></thead><tbody>${view.rows.map((row) => `<tr>${row.map((cell, i) => `<td class="${view.strong.includes(i) ? "strong" : ""} ${i > 2 ? "mono" : ""}">${view.avatar === i ? `<span class="avatar">${cell}</span>` : i === 0 ? `<span class="rank mono">${cell}</span>` : cell}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+        renderTabs();
+      }
+      render();
+    </script>
+  </body>
+</html>
